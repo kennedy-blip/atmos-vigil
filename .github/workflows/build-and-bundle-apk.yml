@@ -76,9 +76,10 @@ jobs:
         run: npx cap sync android
 
       - name: Build APK
+        working-directory: android
         run: |
-          gradle :app:assembleDebug
-          gradle :app:assembleRelease || echo 'Release signing not configured — debug APK produced'
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+          ./gradlew :app:assembleRelease --no-daemon || echo 'Release signing not configured — debug APK produced'
 
       - name: Stage release artifact (static/releases/ — served by the Vercel deploy)
         run: |
