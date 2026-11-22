@@ -10,7 +10,6 @@ import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
-import com.getcapacitor.PluginResult
 import com.getcapacitor.annotation.CapacitorPlugin
 
 /**
@@ -57,7 +56,7 @@ class BarometerThermoPlugin : Plugin(), SensorEventListener {
                 val ret = JSObject()
                 ret.put("available", false)
                 ret.put("reason", "No barometer, temperature or humidity sensor found on this device")
-                return call.resolve(PluginResult(PluginResult.Status.OK, ret))
+                return call.resolve(ret)
             }
 
             pressureSensor?.let { sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL) }
@@ -70,8 +69,8 @@ class BarometerThermoPlugin : Plugin(), SensorEventListener {
             ret.put("pressureAvailable", pressureSensor != null)
             ret.put("temperatureAvailable", temperatureSensor != null)
             ret.put("humidityAvailable", humiditySensor != null)
-            call.resolve(PluginResult(PluginResult.Status.OK, ret))
-        } catch (t: Throwable) {
+            call.resolve(ret)
+        } catch (t: Exception) {
             call.reject("Failed to start barometer listeners", t)
         }
     }
@@ -84,7 +83,7 @@ class BarometerThermoPlugin : Plugin(), SensorEventListener {
         running = false
         val ret = JSObject()
         ret.put("stopped", true)
-        call.resolve(PluginResult(PluginResult.Status.OK, ret))
+        call.resolve(ret)
     }
 
     @PluginMethod
@@ -95,7 +94,7 @@ class BarometerThermoPlugin : Plugin(), SensorEventListener {
         ret.put("temperatureC", lastTemperatureC)
         ret.put("humidityPct", lastHumidityPct)
         ret.put("running", running)
-        call.resolve(PluginResult(PluginResult.Status.OK, ret))
+        call.resolve(ret)
     }
 
     override fun onSensorChanged(event: SensorEvent) {
