@@ -93,32 +93,12 @@ jobs:
 
       - name: Build APK
         working-directory: android
-        continue-on-error: true
         run: |
           java -version
           chmod +x gradlew
-          set -e
           ./gradlew --version
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-build.log
-          GRADLE_EXIT=${PIPESTATUS[0]}
-          ./gradlew :app:assembleRelease --no-daemon --stacktrace || true
-          exit "$GRADLE_EXIT"
-
-      - name: Persist build failure to a debug branch (logs are unreachable)
-        if: always()
-        run: |
-          if [ -f /tmp/gradle-build.log ]; then
-            cp /tmp/gradle-build.log gradle-build-error.log
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git checkout --orphan ci-debug-gradle-error 2>/dev/null || true
-            git rm -rf . >/dev/null 2>&1 || true
-            git add gradle-build-error.log
-            git commit -m "ci: capture APK build failure (debug)"
-            git push --force origin ci-debug-gradle-error 2>/dev/null || true
-            git checkout - 2>/dev/null || true
-            rm -f gradle-build-error.log
-          fi
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace || echo 'Release signing not configured — debug APK produced'
 
       - name: Stage release artifact (static/releases/ — served by the Vercel deploy)
         run: |
