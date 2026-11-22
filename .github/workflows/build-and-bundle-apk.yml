@@ -120,9 +120,20 @@ jobs:
         working-directory: android
         run: gradle :app:assembleDebug --no-daemon --dry-run --stacktrace
 
-      - name: Build capacitor-android module
+      - name: Build capacitor-android module (capture output)
         working-directory: android
-        run: gradle :capacitor-android:assembleDebug --no-daemon --stacktrace
+        continue-on-error: true
+        run: |
+          gradle :capacitor-android:assembleDebug --no-daemon --stacktrace > /tmp/gradle-error.log 2>&1
+          echo "GRADLE_EXIT=$?" >> /tmp/gradle-error.log
+          tail -c 6000 /tmp/gradle-error.log
+
+      - name: Upload captured gradle output
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-error-output
+          path: /tmp/gradle-error.log
+          if: always()
 
       - name: Build capacitor-app module
         working-directory: android
