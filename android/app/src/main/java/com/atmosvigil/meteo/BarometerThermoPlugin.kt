@@ -99,7 +99,7 @@ class BarometerThermoPlugin : Plugin(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type == Sensor.TYPE_PRESSURE && event.values.isNotEmpty()) {
-            lastPressureHpa = event.values[0]
+            lastPressureHpa = event.values[0].toDouble()
             val ret = JSObject().apply {
                 put("pressureHpa", lastPressureHpa)
                 put("pressureInHg", lastPressureHpa / 33.8639)
@@ -109,7 +109,7 @@ class BarometerThermoPlugin : Plugin(), SensorEventListener {
             }
             mainHandler.post { notifyListeners("pressure", ret) }
         } else if (event.sensor.type == Sensor.TYPE_AMBIENT_TEMPERATURE && event.values.isNotEmpty()) {
-            lastTemperatureC = event.values[0]
+            lastTemperatureC = event.values[0].toDouble()
             val ret = JSObject().apply {
                 put("temperatureC", lastTemperatureC)
                 put("pressureHpa", lastPressureHpa)
@@ -118,7 +118,7 @@ class BarometerThermoPlugin : Plugin(), SensorEventListener {
             }
             mainHandler.post { notifyListeners("temperature", ret) }
         } else if (event.sensor.type == Sensor.TYPE_RELATIVE_HUMIDITY && event.values.isNotEmpty()) {
-            lastHumidityPct = event.values[0]
+            lastHumidityPct = event.values[0].toDouble()
             val ret = JSObject().apply {
                 put("humidityPct", lastHumidityPct)
                 put("pressureHpa", lastPressureHpa)
