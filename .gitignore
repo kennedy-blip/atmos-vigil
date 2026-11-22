@@ -1,0 +1,14 @@
+.svelte-kit
+node_modules
+build
+dist
+.vercel
+.env
+*.log
+
+# Local debug APK (CI pipeline owns atmosvigil-release.apk)
+static/releases/atmosvigil-debug.apk
+
+# Python bytecode
+__pycache__/
+*.pyc

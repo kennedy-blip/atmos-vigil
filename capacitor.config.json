@@ -1,0 +1,13 @@
+{
+  "appId": "com.atmosvigil.meteo",
+  "appName": "AtmosVigil",
+  "webDir": "build",
+  "android": {
+    "allowMixedContent": false,
+    "useLegacyBridge": false
+  },
+  "plugins": {
+    "BarometerThermo": {},
+    "AeroAcousticAnemometer": {}
+  }
+}
