@@ -78,8 +78,11 @@ jobs:
       - name: Build APK
         working-directory: android
         run: |
+          chmod +x gradlew || true
+          ls -l gradlew
+          ./gradlew --version
           ./gradlew :app:assembleDebug --no-daemon --stacktrace
-          ./gradlew :app:assembleRelease --no-daemon || echo 'Release signing not configured — debug APK produced'
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace || echo 'Release signing not configured — debug APK produced'
 
       - name: Stage release artifact (static/releases/ — served by the Vercel deploy)
         run: |
