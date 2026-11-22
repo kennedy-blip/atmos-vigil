@@ -128,9 +128,30 @@ jobs:
           path: /tmp/gradle-error.log
           if: always()
 
-      - name: Build capacitor-app module
+      - name: Build capacitor-app module (capture output)
         working-directory: android
-        run: ./gradlew :capacitor-app:assembleDebug --no-daemon --stacktrace
+        continue-on-error: true
+        run: |
+          ./gradlew :capacitor-app:assembleDebug --no-daemon --stacktrace > /tmp/gradle-app-error.log 2>&1
+          echo "GRADLE_EXIT=$?" >> /tmp/gradle-app-error.log
+          tail -c 6000 /tmp/gradle-app-error.log
+
+      - name: Persist capacitor-app gradle failure to a debug branch (logs are unreachable)
+        if: always()
+        run: |
+          if [ -f /tmp/gradle-app-error.log ]; then
+            cp /tmp/gradle-app-error.log /tmp/gradle-app-error-artifact.log
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git checkout --orphan ci-debug-gradle-error 2>/dev/null || true
+            git rm -rf . >/dev/null 2>&1 || true
+            cp /tmp/gradle-app-error-artifact.log gradle-app-error.log
+            git add gradle-app-error.log
+            git commit -m "ci: capture capacitor-app gradle failure (debug)"
+            git push --force origin ci-debug-gradle-error || echo "debug push failed (branch locked?)"
+            git checkout arena/0d01b29f-atmos-vigil || git checkout main
+            rm -f gradle-app-error.log
+          fi
 
       - name: Build capacitor-cordova-android-plugins module
         working-directory: android
