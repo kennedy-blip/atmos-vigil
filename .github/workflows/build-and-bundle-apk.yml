@@ -105,12 +105,28 @@ jobs:
           cat android/variables.gradle
           (sdkmanager "platforms;android-36" >/dev/null 2>&1 && echo "SDK 36 installed") || echo "SDK 36 not available — staying on 35"
 
-      - name: Build APK
+      - name: Check toolchain
         working-directory: android
         run: |
+          echo "gradle on PATH:"
+          which gradle || echo "gradle NOT on PATH"
           gradle --version
-          gradle :app:assembleDebug --no-daemon --stacktrace
-          gradle :app:assembleRelease --no-daemon --stacktrace || echo 'Release signing not configured — debug APK produced'
+          java -version
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls -l gradlew
+          ls -l android/gradle/wrapper/
+
+      - name: Dry-run (Gradle configuration)
+        working-directory: android
+        run: gradle :app:assembleDebug --no-daemon --dry-run --stacktrace
+
+      - name: Build debug APK
+        working-directory: android
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Build release APK (best effort — debug APK ships if signing is absent)
+        working-directory: android
+        run: gradle :app:assembleRelease --no-daemon --stacktrace || echo 'Release signing not configured — debug APK produced'
 
       - name: Stage release artifact (static/releases/ — served by the Vercel deploy)
         run: |
