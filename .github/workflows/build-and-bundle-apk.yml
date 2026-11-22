@@ -45,9 +45,12 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Set up Gradle
+        # AGP 8.13.0 requires Gradle >= 8.13 — the Capacitor template pins the
+        # wrapper at gradle-8.14.3; install a matching standalone gradle so the
+        # wrapper download (~250 MB, services.gradle.org) is never needed.
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: 8.10.2
+          gradle-version: 8.14.3
 
       - name: Install npm dependencies
         run: npm ci
@@ -90,11 +93,9 @@ jobs:
       - name: Build APK
         working-directory: android
         run: |
-          chmod +x gradlew || true
-          ls -l gradlew
-          ./gradlew --version
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace
-          ./gradlew :app:assembleRelease --no-daemon --stacktrace || echo 'Release signing not configured — debug APK produced'
+          gradle --version
+          gradle :app:assembleDebug --no-daemon --stacktrace
+          gradle :app:assembleRelease --no-daemon --stacktrace || echo 'Release signing not configured — debug APK produced'
 
       - name: Stage release artifact (static/releases/ — served by the Vercel deploy)
         run: |
