@@ -75,6 +75,26 @@ jobs:
       - name: Sync web assets into Android
         run: npx cap sync android
 
+      - name: Apply Kotlin support to the generated app
+        # The capacitor template is Java-only — without this, the in-tree
+        # Kotlin plugins (BarometerThermoPlugin, AeroAcousticAnemometerPlugin)
+        # and the Kotlin MainActivity are never compiled.
+        run: |
+          cat >> android/app/build.gradle << 'KOTLIN_BLOCK'
+
+apply plugin: 'kotlin-android'
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.1.0"
+}
+KOTLIN_BLOCK
+          sed -i "s|classpath 'com.android.tools.build:gradle:8.13.0'|classpath 'com.android.tools.build:gradle:8.13.0'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0'|" android/build.gradle
+          grep -n -i "kotlin" android/build.gradle android/app/build.gradle
+
+      - name: Ensure Android SDK 36 platform is available
+        run: sdkmanager "platforms;android-36" || echo "SDK 36 download failed — continuing with available platform"
+
       - name: Build APK
         working-directory: android
         run: |
