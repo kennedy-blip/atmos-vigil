@@ -19,7 +19,9 @@ on:
 
 env:
   NODE_VERSION: '22'
-  JAVA_VERSION: '17'
+  # Capacitor 8 compiles with Java 21 (sourceCompatibility/targetCompatibility
+  # VERSION_21 in the generated capacitor modules + app) — JDK 17 cannot build it.
+  JAVA_VERSION: '21'
 
 permissions:
   contents: write
@@ -38,7 +40,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -72,8 +74,14 @@ jobs:
           cp -r android.plugins-src/app/src/main/java/com/atmosvigil/meteo/* "$PLUGIN_DIR/"
           cp android.plugins-src/capacitor/MainActivity.kt "$PLUGIN_DIR/MainActivity.kt"
           rm -f "$PLUGIN_DIR/MainActivity.java"
+          # The aeroacoustic anemometer streams microphone audio from a Kotlin
+          # plugin — allow it in the AndroidManifest that cap sync regenerated.
+          if ! grep -q RECORD_AUDIO android/app/src/main/AndroidManifest.xml; then
+            sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />#' android/app/src/main/AndroidManifest.xml
+          fi
           rm -rf android.plugins-src
           ls -R "$PLUGIN_DIR"
+          cat android/app/src/main/AndroidManifest.xml
 
       - name: Sync web assets into Android
         run: npx cap sync android
@@ -81,14 +89,21 @@ jobs:
       - name: Apply Kotlin support to the generated app
         # The capacitor template is Java-only — without this, the in-tree
         # Kotlin plugins (BarometerThermoPlugin, AeroAcousticAnemometerPlugin)
-        # and the Kotlin MainActivity are never compiled.
+        # and the Kotlin MainActivity are never compiled. Kotlin 2.3.0 is the
+        # AGP 8.13-tested pairing.
         run: |
-          printf '\napply plugin: "kotlin-android"\n\ndependencies {\n    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.1.0"\n}\n' >> android/app/build.gradle
-          sed -i "s|classpath 'com.android.tools.build:gradle:8.13.0'|classpath 'com.android.tools.build:gradle:8.13.0'\n        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0'|" android/build.gradle
+          printf '\napply plugin: "kotlin-android"\n\nandroid {\n    compileOptions {\n        sourceCompatibility JavaVersion.VERSION_21\n        targetCompatibility JavaVersion.VERSION_21\n    }\n}\n\ndependencies {\n    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.3.0"\n}\n' >> android/app/build.gradle
+          sed -i "s|classpath 'com.android.tools.build:gradle:8.13.0'|classpath 'com.android.tools.build:gradle:8.13.0'\n        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.0'|" android/build.gradle
           grep -n -i "kotlin" android/build.gradle android/app/build.gradle
 
-      - name: Ensure Android SDK 36 platform is available
-        run: sdkmanager "platforms;android-36" || echo "SDK 36 download failed — continuing with available platform"
+      - name: Pin the Android SDK platform to 35 and best-effort install 36
+        # The runner images carry android-35; android-36 is newer. Patch the
+        # template's compileSdk/targetSdk to the preinstalled 35, and still try
+        # an install so an 36-capable image keeps working if it appears.
+        run: |
+          sed -i 's/compileSdkVersion = 36/compileSdkVersion = 35/; s/targetSdkVersion = 36/targetSdkVersion = 35/' android/variables.gradle
+          cat android/variables.gradle
+          (sdkmanager "platforms;android-36" >/dev/null 2>&1 && echo "SDK 36 installed") || echo "SDK 36 not available — staying on 35"
 
       - name: Build APK
         working-directory: android

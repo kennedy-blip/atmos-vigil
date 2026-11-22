@@ -5,10 +5,10 @@
 // Pattern (Capacitor 4+): local plugin classes are registered in onCreate BEFORE
 // super.onCreate() is called — registerPlugin appends to the plugin builder that
 // BridgeActivity's onCreate reads.
+package com.atmosvigil.meteo
+
 import android.os.Bundle
 import com.getcapacitor.BridgeActivity
-import com.atmosvigil.meteo.BarometerThermoPlugin
-import com.atmosvigil.meteo.AeroAcousticAnemometerPlugin
 
 class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
