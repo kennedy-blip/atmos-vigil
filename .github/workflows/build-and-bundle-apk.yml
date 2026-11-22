@@ -80,16 +80,8 @@ jobs:
         # Kotlin plugins (BarometerThermoPlugin, AeroAcousticAnemometerPlugin)
         # and the Kotlin MainActivity are never compiled.
         run: |
-          cat >> android/app/build.gradle << 'KOTLIN_BLOCK'
-
-apply plugin: 'kotlin-android'
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.1.0"
-}
-KOTLIN_BLOCK
-          sed -i "s|classpath 'com.android.tools.build:gradle:8.13.0'|classpath 'com.android.tools.build:gradle:8.13.0'
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0'|" android/build.gradle
+          printf '\napply plugin: "kotlin-android"\n\ndependencies {\n    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.1.0"\n}\n' >> android/app/build.gradle
+          sed -i "s|classpath 'com.android.tools.build:gradle:8.13.0'|classpath 'com.android.tools.build:gradle:8.13.0'\n        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0'|" android/build.gradle
           grep -n -i "kotlin" android/build.gradle android/app/build.gradle
 
       - name: Ensure Android SDK 36 platform is available
