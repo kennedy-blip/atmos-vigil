@@ -114,7 +114,7 @@ jobs:
           java -version
           echo "ANDROID_HOME=$ANDROID_HOME"
           ls -l gradlew
-          ls -l android/gradle/wrapper/
+          ls -l gradle/wrapper/
 
       - name: Dry-run (Gradle configuration)
         working-directory: android
