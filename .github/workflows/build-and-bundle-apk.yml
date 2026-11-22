@@ -91,79 +91,14 @@ jobs:
           sed -i "s|classpath 'com.android.tools.build:gradle:8.13.0'|classpath 'com.android.tools.build:gradle:8.13.0'\n        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.0'|" android/build.gradle
           grep -n -i "kotlin" android/build.gradle android/app/build.gradle
 
-      - name: Pin the Android SDK platform to 35 and best-effort install 36
-        # The runner images carry android-35; android-36 is newer. Patch the
-        # template's compileSdk/targetSdk to the preinstalled 35, and still try
-        # an install so an 36-capable image keeps working if it appears.
-        run: |
-          sed -i 's/compileSdkVersion = 36/compileSdkVersion = 35/; s/targetSdkVersion = 36/targetSdkVersion = 35/' android/variables.gradle
-          cat android/variables.gradle
-          (sdkmanager "platforms;android-36" >/dev/null 2>&1 && echo "SDK 36 installed") || echo "SDK 36 not available — staying on 35"
-
-      - name: Check toolchain
+      - name: Build APK
         working-directory: android
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
           java -version
           chmod +x gradlew
           ./gradlew --version
-          ls -l gradle/wrapper/
-
-      - name: Dry-run (Gradle configuration)
-        working-directory: android
-        run: ./gradlew :app:assembleDebug --no-daemon --dry-run --stacktrace
-
-      - name: Build capacitor-android module (capture output)
-        working-directory: android
-        continue-on-error: true
-        run: |
-          ./gradlew :capacitor-android:assembleDebug --no-daemon --stacktrace > /tmp/gradle-error.log 2>&1
-          echo "GRADLE_EXIT=$?" >> /tmp/gradle-error.log
-          tail -c 6000 /tmp/gradle-error.log
-
-      - name: Upload captured gradle output
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-error-output
-          path: /tmp/gradle-error.log
-          if: always()
-
-      - name: Build capacitor-app module (capture output)
-        working-directory: android
-        continue-on-error: true
-        run: |
-          ./gradlew :capacitor-app:assembleDebug --no-daemon --stacktrace > /tmp/gradle-app-error.log 2>&1
-          echo "GRADLE_EXIT=$?" >> /tmp/gradle-app-error.log
-          tail -c 6000 /tmp/gradle-app-error.log
-
-      - name: Persist capacitor-app gradle failure to a debug branch (logs are unreachable)
-        if: always()
-        run: |
-          if [ -f /tmp/gradle-app-error.log ]; then
-            cp /tmp/gradle-app-error.log /tmp/gradle-app-error-artifact.log
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git checkout --orphan ci-debug-gradle-error 2>/dev/null || true
-            git rm -rf . >/dev/null 2>&1 || true
-            cp /tmp/gradle-app-error-artifact.log gradle-app-error.log
-            git add gradle-app-error.log
-            git commit -m "ci: capture capacitor-app gradle failure (debug)"
-            git push --force origin ci-debug-gradle-error || echo "debug push failed (branch locked?)"
-            git checkout arena/0d01b29f-atmos-vigil || git checkout main
-            rm -f gradle-app-error.log
-          fi
-
-      - name: Build capacitor-cordova-android-plugins module
-        working-directory: android
-        run: ./gradlew :capacitor-cordova-android-plugins:assembleDebug --no-daemon --stacktrace
-
-      - name: Build debug APK
-        working-directory: android
-        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
-
-      - name: Build release APK (best effort — debug APK ships if signing is absent)
-        working-directory: android
-        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace || echo 'Release signing not configured — debug APK produced'
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace || echo 'Release signing not configured — debug APK produced'
 
       - name: Stage release artifact (static/releases/ — served by the Vercel deploy)
         run: |
