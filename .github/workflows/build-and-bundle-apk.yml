@@ -120,6 +120,18 @@ jobs:
         working-directory: android
         run: gradle :app:assembleDebug --no-daemon --dry-run --stacktrace
 
+      - name: Build capacitor-android module
+        working-directory: android
+        run: gradle :capacitor-android:assembleDebug --no-daemon --stacktrace
+
+      - name: Build capacitor-app module
+        working-directory: android
+        run: gradle :capacitor-app:assembleDebug --no-daemon --stacktrace
+
+      - name: Build capacitor-cordova-android-plugins module
+        working-directory: android
+        run: gradle :capacitor-cordova-android-plugins:assembleDebug --no-daemon --stacktrace
+
       - name: Build debug APK
         working-directory: android
         run: gradle :app:assembleDebug --no-daemon --stacktrace
