@@ -93,12 +93,35 @@ jobs:
 
       - name: Build APK
         working-directory: android
+        continue-on-error: true
         run: |
           java -version
           chmod +x gradlew
           ./gradlew --version
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace
-          ./gradlew :app:assembleRelease --no-daemon --stacktrace || echo 'Release signing not configured — debug APK produced'
+          set +e
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace > /tmp/gradle-build.log 2>&1
+          GRADLE_EXIT=$?
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace >> /tmp/gradle-build.log 2>&1
+          echo "GRADLE_EXIT=$GRADLE_EXIT" >> /tmp/gradle-build.log
+          cat /tmp/gradle-build.log
+          # Only block the run when the debug build actually failed;
+          # release is best-effort.
+          exit "$GRADLE_EXIT"
+
+      - name: Persist build failure to a debug branch (logs are unreachable)
+        if: always()
+        run: |
+          if [ -f /tmp/gradle-build.log ] && [ "$(grep '^GRADLE_EXIT=' /tmp/gradle-build.log | tail -1 | cut -d= -f2)" != "0" ]; then
+            cp /tmp/gradle-build.log gradle-build-error.log
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            BLOB=$(git hash-object -w gradle-build-error.log)
+            TREE=$(printf '100644 blob %s\tgradle-build-error.log\n' "$BLOB" | git mktree)
+            COMMIT=$(git commit-tree "$TREE" -m "ci: capture APK build failure (debug)")
+            git update-ref refs/heads/ci-debug-gradle-error "$COMMIT"
+            git push --force origin ci-debug-gradle-error
+            rm -f gradle-build-error.log
+          fi
 
       - name: Stage release artifact (static/releases/ — served by the Vercel deploy)
         run: |
