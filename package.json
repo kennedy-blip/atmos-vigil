@@ -1,0 +1,30 @@
+{
+  "name": "atmos-vigil",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ATMOS-VIGIL — real-world off-grid aeroacoustic wind anemometer, brontophonic lightning radar, barometric microburst predictor & wet-bulb WBGT survival station. Zero TypeScript.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "apk:build": "node scripts/build-apk.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "jszip": "^3.10.2",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/cli": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@sveltejs/adapter-static": "^4.0.1",
+    "@sveltejs/kit": "^3.4.0",
+    "svelte": "^5.59.1",
+    "vite": "^8.3.8"
+  }
+}
