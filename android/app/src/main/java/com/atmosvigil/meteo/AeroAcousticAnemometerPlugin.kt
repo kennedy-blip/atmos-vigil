@@ -10,7 +10,6 @@ import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
-import com.getcapacitor.PluginResult
 import com.getcapacitor.annotation.CapacitorPlugin
 import kotlin.math.abs
 import kotlin.math.pow
@@ -56,14 +55,14 @@ class AeroAcousticAnemometerPlugin : Plugin() {
             val ret = JSObject()
             ret.put("started", false)
             ret.put("reason", "already running")
-            return call.resolve(PluginResult(PluginResult.Status.OK, ret))
+            return call.resolve(ret)
         }
         val minBuf = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         if (minBuf <= 0) {
             val ret = JSObject()
             ret.put("started", false)
             ret.put("reason", "min buffer size not supported")
-            return call.resolve(PluginResult(PluginResult.Status.OK, ret))
+            return call.resolve(ret)
         }
         val buffer = makeBuffer(maxOf(minBuf * 2, windowSize * 2))
         val record = AudioRecord(
@@ -77,7 +76,7 @@ class AeroAcousticAnemometerPlugin : Plugin() {
             val ret = JSObject()
             ret.put("started", false)
             ret.put("reason", "audio record failed to initialize")
-            return call.resolve(PluginResult(PluginResult.Status.OK, ret))
+            return call.resolve(ret)
         }
         audioRecord = record
         running = true
@@ -121,7 +120,7 @@ class AeroAcousticAnemometerPlugin : Plugin() {
         ret.put("started", true)
         ret.put("sampleRate", sampleRate)
         ret.put("windowSize", windowSize)
-        call.resolve(PluginResult(PluginResult.Status.OK, ret))
+        call.resolve(ret)
     }
 
     @PluginMethod
@@ -135,7 +134,7 @@ class AeroAcousticAnemometerPlugin : Plugin() {
         }
         val ret = JSObject()
         ret.put("stopped", true)
-        call.resolve(PluginResult(PluginResult.Status.OK, ret))
+        call.resolve(ret)
     }
 
     @PluginMethod
@@ -146,7 +145,7 @@ class AeroAcousticAnemometerPlugin : Plugin() {
         ret.put("beaufort", lastBeaufort)
         ret.put("verdict", lastVerdict)
         ret.put("running", running)
-        call.resolve(PluginResult(PluginResult.Status.OK, ret))
+        call.resolve(ret)
     }
 
     // ---- private DSP helpers ----
