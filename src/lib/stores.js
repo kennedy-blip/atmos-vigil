@@ -16,7 +16,7 @@ const DEFAULT_TELEMETRY = {
 	humidity: 55,
 	solarRadiation: true, // clear sun vs shade
 	dewPointC: 14,
-	wgbt: 25,
+	wbgt: 25,
 	wetBulbC: 16,
 	windChillC: null,
 	cloudBaseM: 1250,
